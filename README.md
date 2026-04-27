@@ -55,7 +55,7 @@ Score = `liftedKg / (bodyweightKg x genderCoefficient x ageCoefficient)`. A 60kg
 
 ### What AI Did and What I Did
 
-This project used AI assistance. Here is the honest breakdown.
+AI assistance. Breakdown:
 
 **AI generated, labeled in comments:**
 - `ExerciseLibrary.kt` and `CardioExerciseLibrary.kt`, 240+ exercises with stat contributions, equipment types, and XP rates. Designing this by hand would have taken days and added no value to the architecture
@@ -63,7 +63,7 @@ This project used AI assistance. Here is the honest breakdown.
 - Boilerplate parts of `Main.kt`
 
 **AI assisted, decisions mine:**
-- All system logic. The algorithms are AI assisted but every design decision, every bug catch, and every structural fix was deliberate
+- The systems are where most of the thinking happened. AI helped with syntaxe, but the logic and the fixes came from actually understanding what the code was doing.
 - The bodyweight XP feature was identified as a missing piece mid-session and designed from scratch
 - The `GameConstants` consolidation came from catching a real drift bug during code review
 
@@ -72,7 +72,7 @@ This project used AI assistance. Here is the honest breakdown.
 - The game design, classes, stats, streak tiers, quest types, rank system
 - Every audit pass that caught issues before they made it into the codebase
 
-I used AI for the parts that are repetitive or time consuming, and kept full control over the parts that actually matter.
+Used AI for the parts that are repetitive or time consuming, and kept full control over the parts that actually matter.
 
 ### Stack
 
@@ -87,4 +87,4 @@ Open the project in IntelliJ IDEA, mark `src` as Sources Root, and run `Main.kt`
 
 ---
 
-*Built by Stamatis Kalaitzidis*
+*Built by Stamatis Kaxiris*
