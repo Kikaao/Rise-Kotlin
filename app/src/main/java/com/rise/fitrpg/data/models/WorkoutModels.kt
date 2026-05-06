@@ -36,11 +36,12 @@ data class WorkoutSession(
     val userId: Int,
     val date: Long,
     val fitnessClass: FitnessClass,
+    val workoutType: WorkoutType,
     val sets: List<WorkoutSet>,
     val totalXpEarned: Int = 0,
     val durationSeconds: Int = 0,
     val notes: String? = null
-) {
+){
     val totalSets: Int get() = sets.size
     val uniqueExercises: Int get() = sets.map { it.exerciseId }.distinct().size
 }

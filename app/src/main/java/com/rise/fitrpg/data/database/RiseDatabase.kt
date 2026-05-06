@@ -32,7 +32,7 @@ import androidx.room.RoomDatabase
         InventoryEntity::class
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 abstract class RiseDatabase : RoomDatabase() {
 

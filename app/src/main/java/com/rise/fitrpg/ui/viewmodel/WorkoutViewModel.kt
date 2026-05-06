@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.rise.fitrpg.data.models.WorkoutType
+
 
 // ============================================================
 // WorkoutViewModel
@@ -163,8 +165,10 @@ class WorkoutViewModel(
                     userId = userId,
                     date = nowMs,
                     fitnessClass = user.currentClass,
+                    workoutType = WorkoutType.MIXED,
                     sets = sets,
                     totalXpEarned = _sessionXpTotal.value,
+                    durationSeconds = 0,
                     notes = notes
                 )
 
