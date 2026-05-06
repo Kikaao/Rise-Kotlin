@@ -1,6 +1,6 @@
 [versions]
 agp = "8.5.2"
-kotlin = "2.1.0"
+kotlin = "2.2.20"
 ksp = "2.1.0-1.0.29"
 coreKtx = "1.18.0"
 junit = "4.13.2"
@@ -38,3 +38,4 @@ androidx-concurrent-futures = { group = "androidx.concurrent", name = "concurren
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
