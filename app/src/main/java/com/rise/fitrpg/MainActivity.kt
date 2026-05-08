@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
             currentClass = FitnessClass.ADVENTURER,
             streakTier = StreakTier.KNIGHT,
             currentStreak = 23,
-              weeklyWorkoutCount = 3,
+            weeklyWorkoutCount = 3,
             weekStartDate = nowMs,
             gold = 740
         )

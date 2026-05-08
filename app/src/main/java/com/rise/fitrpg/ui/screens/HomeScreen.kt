@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -105,7 +106,8 @@ fun HomeScreen(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
+                    .offset(x = 20.dp)
+                    .height(620.dp)
                     .align(Alignment.TopCenter)
             )
 
@@ -113,7 +115,7 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
+                    .height(600.dp)
                     .align(Alignment.TopCenter)
                     .background(
                         Brush.horizontalGradient(
@@ -123,14 +125,14 @@ fun HomeScreen(
                                 Color.Transparent
                             ),
                             startX = 0f,
-                            endX = 600f
+                            endX = 700f
                         )
                     )
             )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(500.dp)
+                    .height(600.dp)
                     .align(Alignment.TopCenter)
                     .background(
                         Brush.verticalGradient(
@@ -139,8 +141,8 @@ fun HomeScreen(
                                 BackgroundDark.copy(alpha = 0.6f),
                                 BackgroundDark
                             ),
-                            startY = 300f,
-                            endY = 900f
+                            startY = 400f,
+                            endY = 1000f
                         )
                     )
             )
@@ -157,7 +159,7 @@ fun HomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
+                        .padding(horizontal = 20.dp, vertical = 26.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     GoldPill(gold = u.gold)
