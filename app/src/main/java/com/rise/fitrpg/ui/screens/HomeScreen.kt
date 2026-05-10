@@ -105,7 +105,7 @@ fun HomeScreen(
                 contentDescription = "Character",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.75f)
                     .offset(x = 20.dp)
                     .height(620.dp)
                     .align(Alignment.TopCenter)
