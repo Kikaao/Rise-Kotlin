@@ -36,6 +36,11 @@ import com.rise.fitrpg.data.models.QuestRarity
 import com.rise.fitrpg.data.models.QuestType
 import com.rise.fitrpg.data.models.WorkoutSession
 import com.rise.fitrpg.data.models.WorkoutType
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.rise.fitrpg.ui.Routes
+import com.rise.fitrpg.ui.screens.WorkoutTypePickerScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -173,7 +178,6 @@ class MainActivity : ComponentActivity() {
         workoutRepository.saveWorkout(session3)
     }
 }
-
 @Composable
 fun RiseApp(
     userRepository: UserRepository,
@@ -183,7 +187,10 @@ fun RiseApp(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route ?: "home"
+
+    var showLogWorkout by remember { mutableStateOf(false) }
+    val currentRoute = if (showLogWorkout) Routes.LOG else (navBackStackEntry?.destination?.route ?: Routes.HOME)
+
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(
@@ -194,32 +201,44 @@ fun RiseApp(
         )
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundDark)
-    ) {
-        Box(modifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(BackgroundDark)
         ) {
-            RiseNavGraph(
-                navController = navController,
-                homeViewModel = homeViewModel
-            )
-        }
-
-        RiseBottomNav(
-            currentRoute = currentRoute,
-            onNavigate = { route ->
-                navController.navigate(route) {
-                    popUpTo(navController.graph.startDestinationId) {
-                        saveState = true
-                    }
-                    launchSingleTop = true
-                    restoreState = true
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                RiseNavGraph(
+                    navController = navController,
+                    homeViewModel = homeViewModel,
+                    onLogWorkout = { showLogWorkout = true }
+                )
+                if (showLogWorkout) {
+                    WorkoutTypePickerScreen(
+                        onTypeSelected = { showLogWorkout = false },
+                        onDismiss = { showLogWorkout = false }
+                    )
                 }
             }
-        )
+
+            RiseBottomNav(
+                currentRoute = currentRoute,
+                onNavigate = { route ->
+                    if (route == Routes.LOG) {
+                        showLogWorkout = true
+                    } else {
+                        showLogWorkout = false
+                        navController.navigate(route) {
+                            popUpTo(Routes.HOME) {
+                                saveState = true
+                                inclusive = false
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
+        }
     }
 }

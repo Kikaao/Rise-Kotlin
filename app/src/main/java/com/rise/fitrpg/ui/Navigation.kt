@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.rise.fitrpg.data.models.WorkoutType
 import com.rise.fitrpg.ui.screens.HomeScreen
+import com.rise.fitrpg.ui.screens.WorkoutTypePickerScreen
 import com.rise.fitrpg.ui.viewmodel.HomeViewModel
 
 object Routes {
@@ -18,7 +20,8 @@ object Routes {
 @Composable
 fun RiseNavGraph(
     navController: NavHostController,
-    homeViewModel: HomeViewModel
+    homeViewModel: HomeViewModel,
+    onLogWorkout: () -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -27,14 +30,11 @@ fun RiseNavGraph(
         composable(Routes.HOME) {
             HomeScreen(
                 viewModel = homeViewModel,
-                onLogWorkout = { navController.navigate(Routes.LOG) }
+                onLogWorkout = onLogWorkout
             )
         }
         composable(Routes.QUESTS) {
             PlaceholderScreen("Quests")
-        }
-        composable(Routes.LOG) {
-            PlaceholderScreen("Log Workout")
         }
         composable(Routes.CHARACTER) {
             PlaceholderScreen("Character")
