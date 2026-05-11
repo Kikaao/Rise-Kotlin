@@ -37,7 +37,6 @@ import com.rise.fitrpg.data.models.QuestType
 import com.rise.fitrpg.data.models.WorkoutSession
 import com.rise.fitrpg.data.models.WorkoutType
 
-
 class MainActivity : ComponentActivity() {
 
     private lateinit var userRepository: UserRepository

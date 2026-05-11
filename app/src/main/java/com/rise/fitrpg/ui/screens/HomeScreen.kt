@@ -103,11 +103,12 @@ fun HomeScreen(
             Image(
                 painter = painterResource(u.currentClass.toCharacterImage()),
                 contentDescription = "Character",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillHeight,
+                alignment = Alignment.TopEnd,
                 modifier = Modifier
-                    .fillMaxWidth(0.75f)
+                    .fillMaxWidth()
                     .offset(x = 20.dp)
-                    .height(620.dp)
+                    .height(600.dp)
                     .align(Alignment.TopCenter)
             )
 
