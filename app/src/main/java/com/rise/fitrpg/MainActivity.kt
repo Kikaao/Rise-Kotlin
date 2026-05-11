@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import com.rise.fitrpg.ui.screens.ExerciseLoggerScreen
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -189,6 +190,7 @@ fun RiseApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     var showLogWorkout by remember { mutableStateOf(false) }
+    var selectedWorkoutType by remember { mutableStateOf<WorkoutType?>(null) }
     val currentRoute = if (showLogWorkout) Routes.LOG else (navBackStackEntry?.destination?.route ?: Routes.HOME)
 
 
@@ -214,10 +216,29 @@ fun RiseApp(
                     onLogWorkout = { showLogWorkout = true }
                 )
                 if (showLogWorkout) {
-                    WorkoutTypePickerScreen(
-                        onTypeSelected = { showLogWorkout = false },
-                        onDismiss = { showLogWorkout = false }
-                    )
+                    if (selectedWorkoutType == null) {
+                        WorkoutTypePickerScreen(
+                            onTypeSelected = { type ->
+                                selectedWorkoutType = type
+                            },
+                            onDismiss = {
+                                showLogWorkout = false
+                                selectedWorkoutType = null
+                            }
+                        )
+                    } else {
+                        ExerciseLoggerScreen(
+                            workoutType = selectedWorkoutType!!,
+                            onFinish = { sets ->
+                                // save workout — coming next
+                                showLogWorkout = false
+                                selectedWorkoutType = null
+                            },
+                            onDismiss = {
+                                selectedWorkoutType = null // go back to type picker
+                            }
+                        )
+                    }
                 }
             }
 
