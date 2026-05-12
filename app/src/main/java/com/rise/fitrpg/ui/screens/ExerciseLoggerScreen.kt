@@ -26,7 +26,42 @@ import com.rise.fitrpg.data.models.MuscleGroup
 import com.rise.fitrpg.data.models.WorkoutType
 import com.rise.fitrpg.ui.theme.*
 
+// ── HELPERS ───────────────────────────────────────────────
+
+fun WorkoutType.isCardio(): Boolean = when (this) {
+    WorkoutType.RUNNING, WorkoutType.CYCLING,
+    WorkoutType.SWIMMING, WorkoutType.HIKING -> true
+    else -> false
+}
+
+fun formatTimer(seconds: Int): String {
+    val m = seconds / 60
+    val s = seconds % 60
+    return "%02d:%02d".format(m, s)
+}
+
+fun estimateXp(reps: Int?, weightKg: Double?, durationSeconds: Int?): Int {
+    return when {
+        weightKg != null && reps != null -> ((weightKg * reps) * 0.1).toInt().coerceAtLeast(5)
+        reps != null -> (reps * 0.5).toInt().coerceAtLeast(5)
+        durationSeconds != null -> (durationSeconds * 0.2).toInt().coerceAtLeast(5)
+        else -> 5
+    }
+}
+
+// ── DATA MODEL ────────────────────────────────────────────
+
+data class LoggedSet(
+    val exerciseId: Int,
+    val exerciseName: String,
+    val reps: Int? = null,
+    val weightKg: Double? = null,
+    val durationSeconds: Int? = null,
+    val xpEarned: Int = 0
+)
+
 // ── EXERCISE LOGGER SCREEN ────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseLoggerScreen(
@@ -38,8 +73,9 @@ fun ExerciseLoggerScreen(
     var loggedSets by remember { mutableStateOf<List<LoggedSet>>(emptyList()) }
     var selectedExercise by remember { mutableStateOf<Exercise?>(null) }
     var showBottomSheet by remember { mutableStateOf(false) }
+    var showCancelDialog by remember { mutableStateOf(false) }
     var elapsedSeconds by remember { mutableStateOf(0) }
-
+    var showCardioForMixed by remember { mutableStateOf(false) }
     // Timer
     LaunchedEffect(Unit) {
         while (true) {
@@ -63,7 +99,8 @@ fun ExerciseLoggerScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
+                .padding(horizontal = 18.dp)
+                .padding(top = 48.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -71,7 +108,7 @@ fun ExerciseLoggerScreen(
                 text = "✕",
                 color = TextSecondary,
                 fontSize = 20.sp,
-                modifier = Modifier.clickable { onDismiss() }
+                modifier = Modifier.clickable { showCancelDialog = true }
             )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -89,7 +126,6 @@ fun ExerciseLoggerScreen(
                     color = PurpleLight
                 )
             }
-            // Total XP preview
             Text(
                 text = "+${loggedSets.sumOf { it.xpEarned }} XP",
                 fontFamily = RajdhaniFamily,
@@ -99,129 +135,166 @@ fun ExerciseLoggerScreen(
             )
         }
 
-        // ── MUSCLE GROUP SELECTOR ─────────────────────────
-        Text(
-            text = "MUSCLE GROUP",
-            fontFamily = OutfitFamily,
-            fontSize = 10.sp,
-            color = TextMuted,
-            letterSpacing = 2.sp,
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)
-        )
+        // ── CARDIO or STRENGTH ────────────────────────────
+        if (workoutType.isCardio()) {
+            CardioInputSection(
+                workoutType = workoutType,
+                onFinish = onFinish
+            )
+        } else {
+            // ── MUSCLE GROUP SELECTOR ─────────────────────
+            Text(
+                text = "MUSCLE GROUP",
+                fontFamily = OutfitFamily,
+                fontSize = 10.sp,
+                color = TextMuted,
+                letterSpacing = 2.sp,
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp)
+            )
 
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(muscleGroups) { group ->
-                val isSelected = selectedMuscleGroup == group
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            if (isSelected) PurplePrimary
-                            else CardDark
-                        )
-                        .border(
-                            1.dp,
-                            if (isSelected) PurplePrimary else BorderColor,
-                            RoundedCornerShape(20.dp)
-                        )
-                        .clickable { selectedMuscleGroup = group }
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = group.name.replace("_", " "),
-                        fontFamily = OutfitFamily,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
-                        color = if (isSelected) Color.White else TextSecondary
-                    )
+
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 18.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (workoutType == WorkoutType.MIXED) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    if (showCardioForMixed) Color(0xFF0EA5E9)
+                                    else CardDark
+                                )
+                                .border(
+                                    1.dp,
+                                    if (showCardioForMixed) Color(0xFF0EA5E9) else BorderColor,
+                                    RoundedCornerShape(20.dp)
+                                )
+                                .clickable {
+                                    showCardioForMixed = !showCardioForMixed
+                                    selectedMuscleGroup = null
+                                }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "🏃 Running",
+                                fontFamily = OutfitFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp,
+                                color = if (showCardioForMixed) Color.White else TextSecondary
+                            )
+                        }
+                    }
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // ── EXERCISE LIST ─────────────────────────────────
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            if (selectedMuscleGroup == null) {
-                item {
+                items(muscleGroups) { group ->
+                    val isSelected = selectedMuscleGroup == group
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        contentAlignment = Alignment.Center
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                if (isSelected) PurplePrimary else CardDark
+                            )
+                            .border(
+                                1.dp,
+                                if (isSelected) PurplePrimary else BorderColor,
+                                RoundedCornerShape(20.dp)
+                            )
+                            .clickable { selectedMuscleGroup = group }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
                     ) {
                         Text(
-                            text = "Select a muscle group\nto browse exercises",
+                            text = group.name.replace("_", " "),
                             fontFamily = OutfitFamily,
-                            fontSize = 14.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp,
+                            color = if (isSelected) Color.White else TextSecondary
                         )
                     }
                 }
-            } else {
-                items(exercises) { exercise ->
-                    ExerciseRow(
-                        exercise = exercise,
-                        setCount = loggedSets.count { it.exerciseId == exercise.id },
-                        onClick = {
-                            selectedExercise = exercise
-                            showBottomSheet = true
-                        }
-                    )
-                }
             }
 
-            // Logged sets summary
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ── EXERCISE LIST ─────────────────────────────
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (selectedMuscleGroup == null) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 40.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Select a muscle group\nto browse exercises",
+                                fontFamily = OutfitFamily,
+                                fontSize = 14.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                } else {
+                    items(exercises) { exercise ->
+                        ExerciseRow(
+                            exercise = exercise,
+                            setCount = loggedSets.count { it.exerciseId == exercise.id },
+                            onClick = {
+                                selectedExercise = exercise
+                                showBottomSheet = true
+                            }
+                        )
+                    }
+                }
+
+                if (loggedSets.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "LOGGED SETS",
+                            fontFamily = OutfitFamily,
+                            fontSize = 10.sp,
+                            color = TextMuted,
+                            letterSpacing = 2.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    items(loggedSets) { set ->
+                        LoggedSetRow(set = set, onRemove = {
+                            loggedSets = loggedSets - set
+                        })
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(80.dp)) }
+            }
+
+            // ── FINISH BUTTON ─────────────────────────────
             if (loggedSets.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .padding(18.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(PurplePrimary)
+                        .clickable { onFinish(loggedSets) }
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = "LOGGED SETS",
-                        fontFamily = OutfitFamily,
-                        fontSize = 10.sp,
-                        color = TextMuted,
+                        text = "FINISH WORKOUT",
+                        fontFamily = RajdhaniFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White,
                         letterSpacing = 2.sp
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                items(loggedSets) { set ->
-                    LoggedSetRow(set = set, onRemove = {
-                        loggedSets = loggedSets - set
-                    })
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
-
-        // ── FINISH BUTTON ─────────────────────────────────
-        if (loggedSets.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(18.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(PurplePrimary)
-                    .clickable { onFinish(loggedSets) }
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "FINISH WORKOUT",
-                    fontFamily = RajdhaniFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    letterSpacing = 2.sp
-                )
             }
         }
     }
@@ -230,16 +303,66 @@ fun ExerciseLoggerScreen(
     if (showBottomSheet && selectedExercise != null) {
         AddSetBottomSheet(
             exercise = selectedExercise!!,
-            onAdd = { set ->
-                loggedSets = loggedSets + set
+            onAdd = { sets ->
+                loggedSets = loggedSets + sets
                 showBottomSheet = false
             },
             onDismiss = { showBottomSheet = false }
         )
     }
+
+    // ── CANCEL DIALOG ─────────────────────────────────────
+    if (showCancelDialog) {
+        AlertDialog(
+            onDismissRequest = { showCancelDialog = false },
+            containerColor = CardDark,
+            title = {
+                Text(
+                    text = "Cancel Workout?",
+                    fontFamily = RajdhaniFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "Your progress will be lost.",
+                    fontFamily = OutfitFamily,
+                    fontSize = 14.sp,
+                    color = TextSecondary
+                )
+            },
+            confirmButton = {
+                Text(
+                    text = "CANCEL WORKOUT",
+                    fontFamily = RajdhaniFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .clickable { onDismiss() }
+                        .padding(8.dp)
+                )
+            },
+            dismissButton = {
+                Text(
+                    text = "KEEP GOING",
+                    fontFamily = RajdhaniFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = PurpleLight,
+                    modifier = Modifier
+                        .clickable { showCancelDialog = false }
+                        .padding(8.dp)
+                )
+            }
+        )
+    }
 }
 
 // ── EXERCISE ROW ──────────────────────────────────────────
+
 @Composable
 fun ExerciseRow(
     exercise: Exercise,
@@ -297,6 +420,7 @@ fun ExerciseRow(
 }
 
 // ── LOGGED SET ROW ────────────────────────────────────────
+
 @Composable
 fun LoggedSetRow(set: LoggedSet, onRemove: () -> Unit) {
     Row(
@@ -350,11 +474,12 @@ fun LoggedSetRow(set: LoggedSet, onRemove: () -> Unit) {
 }
 
 // ── ADD SET BOTTOM SHEET ──────────────────────────────────
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSetBottomSheet(
     exercise: Exercise,
-    onAdd: (LoggedSet) -> Unit,
+    onAdd: (List<LoggedSet>) -> Unit,
     onDismiss: () -> Unit
 ) {
     var sets by remember { mutableStateOf("1") }
@@ -364,6 +489,7 @@ fun AddSetBottomSheet(
 
     val isBodyweight = exercise.usesBodyweight
     val isTimed = exercise.trackingType == com.rise.fitrpg.data.models.TrackingType.TIME
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = CardDark,
@@ -392,8 +518,6 @@ fun AddSetBottomSheet(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-
-            // Sets input
             OutlinedTextField(
                 value = sets,
                 onValueChange = { sets = it },
@@ -408,7 +532,6 @@ fun AddSetBottomSheet(
                 )
             )
 
-            // Reps input — always shown unless pure timed
             if (!isTimed) {
                 OutlinedTextField(
                     value = reps,
@@ -425,7 +548,6 @@ fun AddSetBottomSheet(
                 )
             }
 
-            // Weight input — shown for non-bodyweight exercises
             if (!isBodyweight) {
                 OutlinedTextField(
                     value = weight,
@@ -442,7 +564,6 @@ fun AddSetBottomSheet(
                 )
             }
 
-            // Duration input — shown for timed exercises
             if (isTimed) {
                 OutlinedTextField(
                     value = duration,
@@ -459,7 +580,6 @@ fun AddSetBottomSheet(
                 )
             }
 
-            // Add button
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -481,7 +601,7 @@ fun AddSetBottomSheet(
                                 )
                             )
                         }
-                        newSets.forEach { onAdd(it) }
+                        onAdd(newSets)
                     }
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
@@ -499,29 +619,91 @@ fun AddSetBottomSheet(
     }
 }
 
-// ── DATA MODELS ───────────────────────────────────────────
-data class LoggedSet(
-    val exerciseId: Int,
-    val exerciseName: String,
-    val reps: Int? = null,
-    val weightKg: Double? = null,
-    val durationSeconds: Int? = null,
-    val xpEarned: Int = 0
-)
+// ── CARDIO INPUT SECTION ──────────────────────────────────
 
-// ── HELPERS ───────────────────────────────────────────────
-fun formatTimer(seconds: Int): String {
-    val m = seconds / 60
-    val s = seconds % 60
-    return "%02d:%02d".format(m, s)
-}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CardioInputSection(
+    workoutType: WorkoutType,
+    onFinish: (List<LoggedSet>) -> Unit
+) {
+    var distance by remember { mutableStateOf("") }
+    var duration by remember { mutableStateOf("") }
 
-// Simple XP estimate for UI preview — real XP calculated by XpSystem on save
-fun estimateXp(reps: Int?, weightKg: Double?, durationSeconds: Int?): Int {
-    return when {
-        weightKg != null && reps != null -> ((weightKg * reps) * 0.1).toInt().coerceAtLeast(5)
-        reps != null -> (reps * 0.5).toInt().coerceAtLeast(5)
-        durationSeconds != null -> (durationSeconds * 0.2).toInt().coerceAtLeast(5)
-        else -> 5
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            text = "Log your ${workoutType.name.replace("_", " ").lowercase()} session",
+            fontFamily = OutfitFamily,
+            fontSize = 14.sp,
+            color = TextSecondary
+        )
+
+        OutlinedTextField(
+            value = distance,
+            onValueChange = { distance = it },
+            label = { Text("Distance (km)", color = TextMuted) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = PurplePrimary,
+                unfocusedBorderColor = BorderColor,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary
+            )
+        )
+
+        OutlinedTextField(
+            value = duration,
+            onValueChange = { duration = it },
+            label = { Text("Duration (minutes)", color = TextMuted) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = PurplePrimary,
+                unfocusedBorderColor = BorderColor,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary
+            )
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(PurplePrimary)
+                .clickable {
+                    val cardioSet = LoggedSet(
+                        exerciseId = -1,
+                        exerciseName = workoutType.name.replace("_", " "),
+                        reps = null,
+                        weightKg = distance.toDoubleOrNull(),
+                        durationSeconds = duration.toIntOrNull()?.times(60),
+                        xpEarned = estimateXp(
+                            null,
+                            distance.toDoubleOrNull(),
+                            duration.toIntOrNull()?.times(60)
+                        )
+                    )
+                    onFinish(listOf(cardioSet))
+                }
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "FINISH SESSION",
+                fontFamily = RajdhaniFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color.White,
+                letterSpacing = 2.sp
+            )
+        }
     }
 }
