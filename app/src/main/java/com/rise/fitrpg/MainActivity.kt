@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import com.rise.fitrpg.ui.screens.ExerciseLoggerScreen
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +25,7 @@ import com.rise.fitrpg.data.repository.QuestRepository
 import com.rise.fitrpg.data.repository.UserRepository
 import com.rise.fitrpg.data.repository.WorkoutRepository
 import com.rise.fitrpg.ui.RiseNavGraph
+import com.rise.fitrpg.ui.Routes
 import com.rise.fitrpg.ui.components.RiseBottomNav
 import com.rise.fitrpg.ui.theme.BackgroundDark
 import com.rise.fitrpg.ui.theme.RiseTheme
@@ -40,7 +40,6 @@ import com.rise.fitrpg.data.models.WorkoutType
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.rise.fitrpg.ui.Routes
 import com.rise.fitrpg.ui.screens.WorkoutTypePickerScreen
 
 class MainActivity : ComponentActivity() {
@@ -72,10 +71,10 @@ class MainActivity : ComponentActivity() {
             setContent {
                 RiseTheme {
                     RiseApp(
-                        userRepository = userRepository,
+                        userRepository    = userRepository,
                         workoutRepository = workoutRepository,
-                        cardioRepository = cardioRepository,
-                        questRepository = questRepository
+                        cardioRepository  = cardioRepository,
+                        questRepository   = questRepository
                     )
                 }
             }
@@ -179,6 +178,7 @@ class MainActivity : ComponentActivity() {
         workoutRepository.saveWorkout(session3)
     }
 }
+
 @Composable
 fun RiseApp(
     userRepository: UserRepository,
@@ -190,9 +190,8 @@ fun RiseApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     var showLogWorkout by remember { mutableStateOf(false) }
-    var selectedWorkoutType by remember { mutableStateOf<WorkoutType?>(null) }
-    val currentRoute = if (showLogWorkout) Routes.LOG else (navBackStackEntry?.destination?.route ?: Routes.HOME)
-
+    val currentRoute = if (showLogWorkout) Routes.LOG
+    else (navBackStackEntry?.destination?.route ?: Routes.HOME)
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(
@@ -211,34 +210,21 @@ fun RiseApp(
         ) {
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 RiseNavGraph(
-                    navController = navController,
-                    homeViewModel = homeViewModel,
-                    onLogWorkout = { showLogWorkout = true }
+                    navController     = navController,
+                    homeViewModel     = homeViewModel,
+                    // Repositories forwarded so each tab can create its own ViewModel
+                    // without needing to hoist all ViewModels into MainActivity.
+                    questRepository   = questRepository,
+                    userRepository    = userRepository,
+                    workoutRepository = workoutRepository,
+                    cardioRepository  = cardioRepository,
+                    onLogWorkout      = { showLogWorkout = true }
                 )
                 if (showLogWorkout) {
-                    if (selectedWorkoutType == null) {
-                        WorkoutTypePickerScreen(
-                            onTypeSelected = { type ->
-                                selectedWorkoutType = type
-                            },
-                            onDismiss = {
-                                showLogWorkout = false
-                                selectedWorkoutType = null
-                            }
-                        )
-                    } else {
-                        ExerciseLoggerScreen(
-                            workoutType = selectedWorkoutType!!,
-                            onFinish = { sets ->
-                                // save workout — coming next
-                                showLogWorkout = false
-                                selectedWorkoutType = null
-                            },
-                            onDismiss = {
-                                selectedWorkoutType = null // go back to type picker
-                            }
-                        )
-                    }
+                    WorkoutTypePickerScreen(
+                        onTypeSelected = { showLogWorkout = false },
+                        onDismiss      = { showLogWorkout = false }
+                    )
                 }
             }
 
